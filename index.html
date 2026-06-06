@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>つくったアプリ一覧 | App Gallery</title>
+<meta name="description" content="これまでに作ったアプリの一覧。ゲームやツールをまとめて公開しています。" />
+<style>
+  :root {
+    --bg1: #0e1022;
+    --bg2: #161433;
+    --card: rgba(255,255,255,0.05);
+    --line: rgba(255,255,255,0.10);
+    --text: #eef1fb;
+    --muted: #aab0c8;
+    --accent: #00d4ff;
+    --pink: #ff5d8f;
+    --teal: #2dd4bf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #2a2566, transparent),
+      radial-gradient(1100px 650px at 100% 0%, #123a52, transparent),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 56px 22px 80px; }
+
+  header { text-align: center; margin-bottom: 44px; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 13px; font-weight: 800; letter-spacing: 4px;
+    color: var(--accent); text-transform: uppercase;
+    padding: 6px 14px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(0,212,255,0.08);
+    margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(30px, 6vw, 50px); line-height: 1.15; font-weight: 900;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, #fff 30%, var(--accent));
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 6px 24px rgba(0,212,255,.25));
+  }
+  header p { color: var(--muted); margin-top: 14px; font-size: 16px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    backdrop-filter: blur(6px);
+  }
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 60px rgba(0,0,0,0.45);
+    border-color: rgba(255,255,255,0.22);
+  }
+  .thumb { position: relative; aspect-ratio: 16 / 10; overflow: hidden; }
+  .thumb img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    transition: transform .4s ease;
+  }
+  .card:hover .thumb img { transform: scale(1.06); }
+  .thumb::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(8,9,20,0.85));
+  }
+  .badge {
+    position: absolute; top: 12px; left: 12px; z-index: 2;
+    font-size: 12px; font-weight: 800; letter-spacing: 1px;
+    padding: 5px 11px; border-radius: 999px;
+    color: #0a0f1c; backdrop-filter: blur(2px);
+  }
+  .badge.game { background: linear-gradient(135deg, var(--pink), #ff9a5c); }
+  .badge.tool { background: linear-gradient(135deg, var(--teal), #5ce0ff); }
+  .live-dot {
+    position: absolute; top: 12px; right: 12px; z-index: 2;
+    font-size: 11px; font-weight: 800; letter-spacing: 1px;
+    padding: 5px 10px 5px 22px; border-radius: 999px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.2);
+    color: #b6ffd9;
+  }
+  .live-dot::before {
+    content: ""; position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+    width: 8px; height: 8px; border-radius: 50%; background: #38ef7d;
+    box-shadow: 0 0 8px #38ef7d; animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+
+  .body { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .title { font-size: 21px; font-weight: 900; letter-spacing: .5px; }
+  .desc { color: var(--muted); font-size: 14px; line-height: 1.65; flex: 1; }
+  .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 12px; font-weight: 700; color: #cdd3ea;
+    padding: 4px 10px; border-radius: 8px;
+    background: rgba(255,255,255,0.06); border: 1px solid var(--line);
+  }
+  .actions { display: flex; gap: 10px; margin-top: 6px; }
+  .btn {
+    flex: 1; text-align: center; text-decoration: none;
+    font-size: 15px; font-weight: 800; letter-spacing: .5px;
+    padding: 12px 14px; border-radius: 12px;
+    transition: transform .06s, filter .2s, box-shadow .2s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary {
+    color: #06121f;
+    background: linear-gradient(135deg, var(--accent), #5ce0ff);
+    box-shadow: 0 8px 22px rgba(0,212,255,0.35);
+  }
+  .btn-primary:hover { filter: brightness(1.06); box-shadow: 0 10px 28px rgba(0,212,255,0.5); }
+  .btn-primary.play {
+    background: linear-gradient(135deg, var(--pink), #ff9a5c);
+    box-shadow: 0 8px 22px rgba(255,93,143,0.35); color: #2a0a16;
+  }
+  .btn-ghost {
+    color: var(--text); border: 1px solid var(--line);
+    background: rgba(255,255,255,0.04); flex: 0 0 auto; min-width: 52px;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.12); }
+  .note { font-size: 12px; color: #8b91ab; margin-top: 2px; }
+
+  footer { text-align: center; color: #7b819c; margin-top: 56px; font-size: 13px; line-height: 1.8; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="eyebrow">App Gallery</span>
+      <h1>つくったアプリ一覧</h1>
+      <p>これまでに作ったゲームやツールをまとめました。カードから遊んだり、コードを見られます。</p>
+    </header>
+
+    <div class="grid" id="grid"></div>
+
+    <footer>
+      Made with ❤ &nbsp;|&nbsp; ホスティング: GitHub Pages
+    </footer>
+  </div>
+
+<script>
+  const apps = [
+    {
+      title: 'ジャストクリック！',
+      type: 'game',
+      desc: '横に振れるボールを、入れる場所にピッタリ重なった瞬間にクリック。全5ステージ、だんだん加速するタイミングゲーム。アニメ風グラフィック＆BGM付き。',
+      tags: ['ゲーム', 'HTML / JS', 'Canvas'],
+      thumb: 'assets/thumb_swing.png',
+      live: 'https://esmeralda-gongen.github.io/swing-ball-game/',
+      repo: 'https://github.com/ESMERALDA-GONGEN/swing-ball-game',
+    },
+    {
+      title: 'GOZAAR',
+      type: 'game',
+      desc: '雪山を舞うスキージャンプゲーム。タイミングよく飛び出して、飛距離スコアを伸ばそう。',
+      tags: ['ゲーム', 'HTML / JS', 'Canvas'],
+      thumb: 'assets/thumb_gozaar.png',
+      live: 'https://esmeralda-gongen.github.io/GOZAAR/',
+      repo: 'https://github.com/ESMERALDA-GONGEN/GOZAAR',
+    },
+    {
+      title: '悲しきサラリーマン人生',
+      type: 'game',
+      desc: '入園から老後まで、メンタル♥5で走り抜ける横スクロール人生ゲーム。哀愁ただよう一本道を乗り越えろ。',
+      tags: ['ゲーム', 'HTML / JS', 'Canvas'],
+      thumb: 'assets/thumb_salaryman.png',
+      live: 'https://esmeralda-gongen.github.io/sad-salaryman/',
+      repo: 'https://github.com/ESMERALDA-GONGEN/sad-salaryman',
+    },
+    {
+      title: '貯めない',
+      type: 'tool',
+      desc: '配当・利金を「貯める」より「人生に使う」を後押しする家計アプリ。入金予定をリスト化し、使い道を提案してくれる。',
+      tags: ['ツール', 'Streamlit', 'Python'],
+      thumb: 'assets/thumb_tamenai.png',
+      repo: 'https://github.com/ESMERALDA-GONGEN/tamenai',
+      streamlit: true,
+    },
+    {
+      title: '電車に乗りたかザウルス',
+      type: 'tool',
+      desc: '東海道新幹線の旅の思い出を残すアプリ。駅の情報や思い出アルバムの生成ができる。',
+      tags: ['ツール', 'Streamlit', 'Python'],
+      thumb: 'assets/thumb_densha.png',
+      repo: 'https://github.com/ESMERALDA-GONGEN/denshaninoritakaSAURUS',
+      streamlit: true,
+    },
+  ];
+
+  const grid = document.getElementById('grid');
+  grid.innerHTML = apps.map(a => {
+    const typeLabel = a.type === 'game' ? 'GAME' : 'TOOL';
+    const tags = a.tags.map(t => '<span class="tag">' + t + '</span>').join('');
+    let actions;
+    if (a.live) {
+      actions =
+        '<a class="btn btn-primary play" href="' + a.live + '" target="_blank" rel="noopener">▶ 遊ぶ</a>' +
+        '<a class="btn btn-ghost" href="' + a.repo + '" target="_blank" rel="noopener" title="GitHub">&lt;/&gt;</a>';
+    } else {
+      actions =
+        '<a class="btn btn-primary" href="' + a.repo + '" target="_blank" rel="noopener">コードを見る</a>';
+    }
+    const live = a.live ? '<span class="live-dot">LIVE</span>' : '';
+    const note = a.streamlit ? '<div class="note">※ Streamlitアプリ（ローカル実行 / 要デプロイ）</div>' : '';
+    return (
+      '<article class="card">' +
+        '<div class="thumb">' +
+          '<span class="badge ' + a.type + '">' + typeLabel + '</span>' + live +
+          '<img src="' + a.thumb + '" alt="' + a.title + '" loading="lazy" />' +
+        '</div>' +
+        '<div class="body">' +
+          '<div class="title">' + a.title + '</div>' +
+          '<div class="desc">' + a.desc + '</div>' +
+          '<div class="tags">' + tags + '</div>' +
+          '<div class="actions">' + actions + '</div>' +
+          note +
+        '</div>' +
+      '</article>'
+    );
+  }).join('');
+</script>
+</body>
+</html>
