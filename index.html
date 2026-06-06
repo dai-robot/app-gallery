@@ -198,8 +198,8 @@
       desc: '東海道新幹線の旅の思い出を残すアプリ。駅の情報や思い出アルバムの生成ができる。',
       tags: ['ツール', 'Streamlit', 'Python'],
       thumb: 'assets/thumb_densha.png',
+      live: 'https://denshaninoritakasaurus.streamlit.app/',
       repo: 'https://github.com/ESMERALDA-GONGEN/denshaninoritakaSAURUS',
-      streamlit: true,
     },
   ];
 
@@ -209,8 +209,10 @@
     const tags = a.tags.map(t => '<span class="tag">' + t + '</span>').join('');
     let actions;
     if (a.live) {
+      const playLabel = a.type === 'game' ? '▶ 遊ぶ' : '▶ 開く';
+      const playClass = a.type === 'game' ? 'btn btn-primary play' : 'btn btn-primary';
       actions =
-        '<a class="btn btn-primary play" href="' + a.live + '" target="_blank" rel="noopener">▶ 遊ぶ</a>' +
+        '<a class="' + playClass + '" href="' + a.live + '" target="_blank" rel="noopener">' + playLabel + '</a>' +
         '<a class="btn btn-ghost" href="' + a.repo + '" target="_blank" rel="noopener" title="GitHub">&lt;/&gt;</a>';
     } else {
       actions =
