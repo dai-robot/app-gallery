@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" fill="none">
+  <rect width="640" height="400" fill="#f7f4ee"/>
+  <rect x="0" y="280" width="640" height="120" fill="#cfe4e0" opacity="0.55"/>
+  <path d="M0 290 Q80 275 160 290 T320 290 T480 290 T640 290" stroke="#9fc7c0" stroke-width="3" stroke-dasharray="10 8"/>
+  <path d="M0 310 Q100 298 200 310 T400 310 T640 310" stroke="#7fa8a0" stroke-width="2" stroke-dasharray="8 6" opacity="0.7"/>
+
+  <!-- “ -->
+  <g transform="translate(72 48)">
+    <rect x="0" y="0" width="200" height="240" rx="14" fill="#fff" stroke="#7fa8a0" stroke-width="4"/>
+    <path d="M100 0 V240 M0 120 H200" stroke="#7fa8a0" stroke-width="3"/>
+    <circle cx="70" cy="80" r="28" fill="#aac4d8" opacity="0.7"/>
+    <rect x="130" y="160" width="48" height="36" rx="6" fill="#e7c9a9" opacity="0.85"/>
+    <text x="16" y="228" font-family="serif" font-size="18" fill="#6b7b7b">Ln“</text>
+  </g>
+
+  <!-- Aö -->
+  <g transform="translate(380 90) rotate(14)">
+    <rect x="0" y="40" width="72" height="160" rx="28" fill="#dff0ec" stroke="#7fa8a0" stroke-width="4"/>
+    <rect x="18" y="8" width="36" height="40" rx="6" fill="#e7c9a9" stroke="#b9966e" stroke-width="3"/>
+    <rect x="12" y="88" width="48" height="56" rx="6" fill="#fff" stroke="#cdbfa6" stroke-width="2"/>
+    <path d="M18 104 H54 M18 120 H54 M18 136 H38" stroke="#cdbfa6" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <text x="320" y="370" text-anchor="middle" font-family="serif" font-size="22" fill="#3a4a4a">Êån0’]ch—O</text>
+</svg>
