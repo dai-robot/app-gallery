@@ -377,11 +377,42 @@ async function runSearch() {
     };
     renderResult(state.result);
   } catch (caught) {
-    showError(error, (caught && caught.message ? caught.message : '検索に失敗しました。') + ' サンプル値で試すか、サーバーAPI版を使ってください。');
+    if (!mock) {
+      const fallback = buildSearchResultFromMock(terms, from, to, document.getElementById('groupName').value.trim() || terms[0]);
+      state.result = fallback;
+      renderResult(fallback);
+      document.getElementById('mockMode').checked = true;
+      showError(error, (caught && caught.message ? caught.message : '検索に失敗しました。') + ' いまは参考サンプル値に自動で切り替えて表示しています。実データはサーバーAPI版でキャッシュしながら取得するのが安全です。');
+    } else {
+      showError(error, (caught && caught.message ? caught.message : '検索に失敗しました。') + ' サンプル値で試すか、サーバーAPI版を使ってください。');
+    }
   } finally {
     button.disabled = false;
     button.textContent = '集計する';
   }
+}
+
+function buildSearchResultFromMock(terms, from, to, label) {
+  const sources = state.mode === 'both' ? ['bibliography', 'proceedings'] : [state.mode];
+  return {
+    queryGroup: { label, terms },
+    yearRange: { from, to },
+    mock: true,
+    sources: sources.map(source => {
+      const termResults = buildMockTermResults(source, terms, from, to);
+      const yearly = aggregateYearly(termResults, from, to);
+      return {
+        source,
+        label: state.labels[source],
+        unit: state.units[source],
+        firstYear: yearly.find(item => item.count > 0)?.year ?? null,
+        total: yearly.reduce((sum, item) => sum + item.count, 0),
+        yearly,
+        terms: termResults,
+        status: 'mock'
+      };
+    })
+  };
 }
 
 async function buildTermResults(source, terms, from, to, onProgress) {
@@ -408,6 +439,7 @@ async function fetchBibliographyCount(term, year) {
   const query = `title="${escapeCql(term)}" AND from="${year}" AND until="${year}"`;
   const params = new URLSearchParams({ operation: 'searchRetrieve', maximumRecords: '1', recordPacking: 'xml', mediatype: 'books', query });
   const response = await fetchWithTimeout(`https://ndlsearch.ndl.go.jp/api/sru?${params}`, { headers: { Accept: 'application/xml,text/xml' } });
+  if (response.status === 429) throw new Error('NDLサーチAPIが429を返しました。短時間に検索が集中したため、レート制限に当たっています。');
   if (!response.ok) throw new Error(`NDLサーチAPIが ${response.status} を返しました。`);
   const xml = await response.text();
   return Number((xml.match(/<numberOfRecords>(\d+)<\/numberOfRecords>/) || [0, 0])[1]);
