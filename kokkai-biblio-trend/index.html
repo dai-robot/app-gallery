@@ -166,11 +166,11 @@
       <div>
         <span class="badge">公開データ横断検索トライアル / 軽量HTML版</span>
         <h1>国会議事録・NDL書誌トレンド検索</h1>
-        <p class="lead">ひとつの検索語だけを、国立国会図書館の書誌データと国会議事録に照会します。相手APIに負荷をかけないため、このHTML版はNDLを含む検索を最大2年、国会議事録のみを最大30年に制限します。</p>
+        <p class="lead">ひとつの検索語だけを、国立国会図書館の書誌データと国会議事録に照会します。相手APIに負荷をかけないため、NDLを含む検索は最大2年に制限し、国会議事録のみは1948年以降の範囲を年ごとにゆっくり取得します。</p>
       </div>
       <div class="metrics">
         <div class="metric"><small>検索語</small><strong>1語</strong></div>
-        <div class="metric"><small>年範囲</small><strong>2-30年</strong></div>
+        <div class="metric"><small>年範囲</small><strong>2年/1948+</strong></div>
         <div class="metric"><small>代替値</small><strong>なし</strong></div>
       </div>
     </div>
@@ -198,7 +198,7 @@
         </div>
         <button id="searchButton" class="primary" type="button">集計する</button>
         <div class="hint">
-          NDL書誌は「本のタイトルに語が含まれる書誌レコード件数」、国会議事録は「本文に語が含まれる発言単位の検索ヒット件数」です。NDLは年によって20秒以上かかるため30秒まで待ちます。国会議事録のみは比較的軽いため最大30年まで許可します。
+          NDL書誌は「本のタイトルに語が含まれる書誌レコード件数」、国会議事録は「本文に語が含まれる発言単位の検索ヒット件数」です。NDLは年によって20秒以上かかるため30秒まで待ちます。国会議事録のみは比較的軽いため、1948年以降を年ごとに取得できます。
         </div>
         <div id="error" class="error"></div>
       </section>
@@ -237,7 +237,7 @@
 
       <section class="panel">
         <h2>長期トレンドについて</h2>
-        <p class="lead">調査では、国会会議録APIは年別件数が概ね1秒未満で返る一方、NDLサーチSRUは年によって20-30秒かかることがありました。国会議事録のみなら30年程度の逐次検索は許容範囲と見なし、各年の間に待ち時間を入れています。NDLを含む長期集計は、こちら側のサーバーで日次・週次にキャッシュし、ユーザー操作時はキャッシュ済み集計を読む構成にしてください。</p>
+        <p class="lead">調査では、国会会議録APIは年別件数が概ね1秒未満で返る一方、NDLサーチSRUは年によって20-30秒かかることがありました。国会議事録のみなら1948年以降まで広げても、年ごとの逐次取得と待ち時間で負荷を抑えられます。ただし全期間検索は1分前後かかる場合があります。NDLを含む長期集計は、こちら側のサーバーで日次・週次にキャッシュし、ユーザー操作時はキャッシュ済み集計を読む構成にしてください。</p>
         <div class="links">
           <a href="https://ndlsearch.ndl.go.jp/help/api/specifications" target="_blank" rel="noopener">NDLサーチ API仕様</a>
           <a href="https://ndlsearch.ndl.go.jp/help/api" target="_blank" rel="noopener">NDLサーチ API利用</a>
@@ -286,7 +286,7 @@ async function runSearch() {
   const span = to - from + 1;
   const includesNdl = state.mode === 'both' || state.mode === 'bibliography';
   if (includesNdl && span > 2) return showError(error, 'NDLを含むHTML版検索は、相手APIへの負荷と応答時間を考慮して最大2年に制限しています。');
-  if (!includesNdl && span > 30) return showError(error, '国会議事録のみのHTML版検索は、相手APIへの負荷を避けるため最大30年に制限しています。');
+  if (!includesNdl && span > currentYear - 1948 + 1) return showError(error, '国会議事録のみの検索範囲は1948年以降にしてください。');
 
   const button = document.getElementById('searchButton');
   button.disabled = true;
