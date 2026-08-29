@@ -247,12 +247,12 @@
           </label>
         </div>
         <label class="check">
-          <span>サンプル値で試す</span>
-          <input id="mockMode" type="checkbox" />
+          <span>サンプル値で試す（GitHub Pages版の初期設定）</span>
+          <input id="mockMode" type="checkbox" checked />
         </label>
         <button id="searchButton" class="primary" type="button">集計する</button>
         <div class="hint">
-          データ単位: NDL書誌は「本のタイトルに語が含まれる書誌レコード件数」、国会議事録は「本文に語が含まれる発言単位の検索ヒット件数」です。
+          データ単位: NDL書誌は「本のタイトルに語が含まれる書誌レコード件数」、国会議事録は「本文に語が含まれる発言単位の検索ヒット件数」です。実APIモードは年数×語数ぶん逐次取得するため時間がかかります。
         </div>
         <div id="error" class="error"></div>
       </section>
@@ -349,12 +349,14 @@ async function runSearch() {
 
   const button = document.getElementById('searchButton');
   button.disabled = true;
-  button.textContent = '集計中...';
+  button.textContent = mock ? '集計中...' : '実APIで集計中...';
   try {
     const sources = state.mode === 'both' ? ['bibliography', 'proceedings'] : [state.mode];
     const sourceResults = [];
     for (const source of sources) {
-      const termResults = mock ? buildMockTermResults(source, terms, from, to) : await buildTermResults(source, terms, from, to);
+      const termResults = mock ? buildMockTermResults(source, terms, from, to) : await buildTermResults(source, terms, from, to, (term, year) => {
+        button.textContent = `${source === 'bibliography' ? 'NDL' : '議事録'}: ${term} / ${year}年`;
+      });
       const yearly = aggregateYearly(termResults, from, to);
       sourceResults.push({
         source,
@@ -382,11 +384,12 @@ async function runSearch() {
   }
 }
 
-async function buildTermResults(source, terms, from, to) {
+async function buildTermResults(source, terms, from, to, onProgress) {
   const out = [];
   for (const term of terms) {
     const yearly = [];
     for (let year = from; year <= to; year += 1) {
+      if (onProgress) onProgress(term, year);
       const count = source === 'bibliography' ? await fetchBibliographyCount(term, year) : await fetchProceedingsCount(term, year);
       yearly.push({ year, count });
       await sleep(120);
@@ -404,7 +407,7 @@ async function buildTermResults(source, terms, from, to) {
 async function fetchBibliographyCount(term, year) {
   const query = `title="${escapeCql(term)}" AND from="${year}" AND until="${year}"`;
   const params = new URLSearchParams({ operation: 'searchRetrieve', maximumRecords: '1', recordPacking: 'xml', mediatype: 'books', query });
-  const response = await fetch(`https://ndlsearch.ndl.go.jp/api/sru?${params}`, { headers: { Accept: 'application/xml,text/xml' } });
+  const response = await fetchWithTimeout(`https://ndlsearch.ndl.go.jp/api/sru?${params}`, { headers: { Accept: 'application/xml,text/xml' } });
   if (!response.ok) throw new Error(`NDLサーチAPIが ${response.status} を返しました。`);
   const xml = await response.text();
   return Number((xml.match(/<numberOfRecords>(\d+)<\/numberOfRecords>/) || [0, 0])[1]);
@@ -412,7 +415,7 @@ async function fetchBibliographyCount(term, year) {
 
 async function fetchProceedingsCount(term, year) {
   const params = new URLSearchParams({ any: term, from: `${year}-01-01`, until: `${year}-12-31`, maximumRecords: '1', recordPacking: 'json' });
-  const response = await fetch(`https://kokkai.ndl.go.jp/api/speech?${params}`, { headers: { Accept: 'application/json' } });
+  const response = await fetchWithTimeout(`https://kokkai.ndl.go.jp/api/speech?${params}`, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`国会会議録APIが ${response.status} を返しました。`);
   const data = await response.json();
   return Number(data.numberOfRecords || 0);
@@ -567,7 +570,7 @@ async function fetchProceedingContext(terms, year, limit) {
   const items = [];
   for (const term of terms) {
     const params = new URLSearchParams({ any: term, from: `${year}-01-01`, until: `${year}-12-31`, maximumRecords: String(Math.max(10, limit * 2)), recordPacking: 'json' });
-    const response = await fetch(`https://kokkai.ndl.go.jp/api/speech?${params}`);
+    const response = await fetchWithTimeout(`https://kokkai.ndl.go.jp/api/speech?${params}`);
     if (!response.ok) throw new Error(`国会会議録APIが ${response.status} を返しました。`);
     const data = await response.json();
     for (const record of data.speechRecord || []) {
@@ -591,7 +594,7 @@ async function fetchBibliographyContext(terms, year, limit) {
   for (const term of terms) {
     const query = `title="${escapeCql(term)}" AND from="${year}" AND until="${year}"`;
     const params = new URLSearchParams({ operation: 'searchRetrieve', maximumRecords: String(Math.max(10, limit)), recordPacking: 'xml', recordSchema: 'dcndl', mediatype: 'books', query });
-    const response = await fetch(`https://ndlsearch.ndl.go.jp/api/sru?${params}`);
+    const response = await fetchWithTimeout(`https://ndlsearch.ndl.go.jp/api/sru?${params}`);
     if (!response.ok) throw new Error(`NDLサーチAPIが ${response.status} を返しました。`);
     const xml = await response.text();
     const records = xml.match(/<record>[\s\S]*?<\/record>/g) || [];
@@ -637,6 +640,18 @@ function getLeader(result) {
 function showError(target, message) {
   target.textContent = message;
   target.style.display = 'block';
+}
+async function fetchWithTimeout(url, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error && error.name === 'AbortError') throw new Error('API応答が10秒を超えたため中断しました。検索範囲を狭めるか、サンプル値で試してください。');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 function escapeCql(term) { return term.replaceAll('\\', '\\\\').replaceAll('"', '\\"'); }
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
