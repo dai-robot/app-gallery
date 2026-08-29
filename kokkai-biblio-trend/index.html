@@ -166,11 +166,11 @@
       <div>
         <span class="badge">公開データ横断検索トライアル / 軽量HTML版</span>
         <h1>国会議事録・NDL書誌トレンド検索</h1>
-        <p class="lead">ひとつの検索語だけを、国立国会図書館の書誌データと国会議事録に照会します。相手APIに負荷をかけないため、NDLを含む検索は最大2年に制限し、国会議事録のみは1948年以降の範囲を年ごとにゆっくり取得します。</p>
+        <p class="lead">ひとつの検索語だけを、国立国会図書館の書誌データと国会議事録に照会します。相手APIに負荷をかけないため、NDLを含む検索は最大5年に制限し、国会議事録のみは1948年以降の範囲を年ごとにゆっくり取得します。</p>
       </div>
       <div class="metrics">
         <div class="metric"><small>検索語</small><strong>1語</strong></div>
-        <div class="metric"><small>年範囲</small><strong>2年/1948+</strong></div>
+        <div class="metric"><small>年範囲</small><strong>5年/1948+</strong></div>
         <div class="metric"><small>代替値</small><strong>なし</strong></div>
       </div>
     </div>
@@ -285,7 +285,7 @@ async function runSearch() {
   if (!Number.isInteger(from) || !Number.isInteger(to) || from < 1948 || to < from) return showError(error, '年範囲の指定が不正です。');
   const span = to - from + 1;
   const includesNdl = state.mode === 'both' || state.mode === 'bibliography';
-  if (includesNdl && span > 2) return showError(error, 'NDLを含むHTML版検索は、相手APIへの負荷と応答時間を考慮して最大2年に制限しています。');
+  if (includesNdl && span > 5) return showError(error, 'NDLを含むHTML版検索は、相手APIへの負荷と応答時間を考慮して最大5年に制限しています。');
   if (!includesNdl && span > currentYear - 1948 + 1) return showError(error, '国会議事録のみの検索範囲は1948年以降にしてください。');
 
   const button = document.getElementById('searchButton');
@@ -324,7 +324,7 @@ async function buildYearly(source, term, from, to, onProgress) {
     onProgress(year);
     const count = source === 'bibliography' ? await fetchBibliographyCount(term, year) : await fetchProceedingsCount(term, year);
     yearly.push({ year, count });
-    await sleep(500);
+    await sleep(source === 'bibliography' ? 1000 : 500);
   }
   return yearly;
 }
